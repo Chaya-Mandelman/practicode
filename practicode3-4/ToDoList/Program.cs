@@ -55,6 +55,15 @@ builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 var app = builder.Build();
+
+// שגיאה לא מטופלת: לוג + JSON עם הודעת השגיאה, וכותרות CORS נשמרות (אחרת הדפדפן מציג "CORS error")
+app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
+{
+    var error = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+    app.Logger.LogError(error, "Unhandled exception");
+    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    await context.Response.WriteAsJsonAsync(new { error = error?.GetBaseException().Message });
+}));
 app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI();
