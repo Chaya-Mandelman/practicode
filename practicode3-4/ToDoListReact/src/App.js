@@ -3,6 +3,31 @@ import service from './service.js';
 import Login from './Login';
 import Register from './Register';
 
+// רקע אנימטיבי משותף לכל הדפים
+export function Layout({ children, showLogout }) {
+  return (
+    <>
+      <div className="bg">
+        <span className="blob b1"></span>
+        <span className="blob b2"></span>
+        <span className="blob b3"></span>
+      </div>
+      <main className="shell">
+        <div className="brand">
+          <div className="logo">
+            <span className="tag">&lt;</span>
+            <span className="name">todo</span>
+            <span className="tag"> /&gt;</span>
+          </div>
+          {showLogout && <button className="chip" onClick={service.logout}>התנתקות ↩</button>}
+        </div>
+        {children}
+        <p className="foot">built with ♥ &amp; React · practicode</p>
+      </main>
+    </>
+  );
+}
+
 function Todos() {
   const [newTodo, setNewTodo] = useState("");
   const [todos, setTodos] = useState([]);
@@ -14,6 +39,7 @@ function Todos() {
 
   async function createTodo(e) {
     e.preventDefault();
+    if (!newTodo.trim()) return;
     await service.addTask(newTodo);
     setNewTodo("");//clear input
     await getTodos();//refresh tasks list (in order to see the new one)
@@ -33,33 +59,47 @@ function Todos() {
     getTodos();
   }, []);
 
+  const done = todos.filter(t => t.isComplete).length;
+  const percent = todos.length ? Math.round((done / todos.length) * 100) : 0;
+
   return (
-    <section className="todoapp">
-      <header className="header">
-        <h1>todos</h1>
-        <form onSubmit={createTodo}>
-          <input className="new-todo" placeholder="Well, let's take on the day" value={newTodo} onChange={(e) => setNewTodo(e.target.value)} />
-        </form>
-      </header>
-      <section className="main" style={{ display: "block" }}>
-        <ul className="todo-list">
-          {todos.map(todo => {
-            return (
-              <li className={todo.isComplete ? "completed" : ""} key={todo.id}>
-                <div className="view">
-                  <input className="toggle" type="checkbox" defaultChecked={todo.isComplete} onChange={(e) => updateCompleted(todo, e.target.checked)} />
-                  <label>{todo.name}</label>
-                  <button className="destroy" onClick={() => deleteTodo(todo.id)}></button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+    <Layout showLogout>
+      <section className="hero">
+        <h1>היום את <span className="glow">כותבת קוד</span><br />וגם סוגרת משימות.</h1>
+        <p>כל משימה שנסגרת היא commit קטן לחיים שלך ✨</p>
       </section>
-      <p style={{ textAlign: "center", padding: "16px" }}>
-        <button onClick={service.logout} style={{ cursor: "pointer" }}>התנתקות</button>
-      </p>
-    </section >
+
+      <section className="card">
+        <div className="stats">
+          <div className="stat"><b>{todos.length}</b><span>משימות</span></div>
+          <div className="stat"><b>{todos.length - done}</b><span>בתהליך</span></div>
+          <div className="stat"><b>{percent}%</b><span>הושלמו</span></div>
+        </div>
+        <div className="progress"><i style={{ width: `${percent}%` }}></i></div>
+
+        <form className="add" onSubmit={createTodo}>
+          <input className="field" placeholder="מה הפיצ'ר הבא שלך?" value={newTodo} onChange={(e) => setNewTodo(e.target.value)} />
+          <button className="btn" type="submit">+ הוספה</button>
+        </form>
+
+        {todos.length === 0 ? (
+          <div className="empty">
+            <code>while (!done) {"{ dream(); }"}</code>
+            <div>הרשימה ריקה. הוסיפי את המשימה הראשונה 🚀</div>
+          </div>
+        ) : (
+          <ul className="list">
+            {todos.map(todo => (
+              <li className={`item ${todo.isComplete ? "done" : ""}`} key={todo.id}>
+                <input className="check" type="checkbox" aria-label="סימון כהושלם" defaultChecked={todo.isComplete} onChange={(e) => updateCompleted(todo, e.target.checked)} />
+                <span className="text">{todo.name}</span>
+                <button className="del" aria-label="מחיקה" onClick={() => deleteTodo(todo.id)}>×</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </Layout>
   );
 }
 

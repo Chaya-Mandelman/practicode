@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { Layout } from './App';
 
 // טופס משותף לדף ההתחברות ולדף ההרשמה
-function AuthForm({ title, buttonText, onSubmit, switchText, switchHref }) {
+function AuthForm({ title, highlight, subtitle, buttonText, onSubmit, switchText, switchLink, switchHref }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,24 +23,23 @@ function AuthForm({ title, buttonText, onSubmit, switchText, switchHref }) {
   }
 
   return (
-    <section className="todoapp">
-      <header className="header">
-        <h1>{title}</h1>
-        <form onSubmit={handleSubmit}>
-          <input className="new-todo" placeholder="שם משתמש" value={username}
+    <Layout>
+      <section className="hero">
+        <h1>{title} <span className="glow">{highlight}</span></h1>
+        <p>{subtitle}</p>
+      </section>
+      <section className="card">
+        <form className="auth" onSubmit={handleSubmit}>
+          <input className="field" placeholder="שם משתמש" value={username}
             onChange={(e) => setUsername(e.target.value)} autoFocus />
-          <input className="new-todo" type="password" placeholder="סיסמה" value={password}
+          <input className="field" type="password" placeholder="סיסמה" value={password}
             onChange={(e) => setPassword(e.target.value)} />
-          <button type="submit" style={{ width: "100%", padding: "16px", fontSize: "20px", cursor: "pointer" }}>
-            {buttonText}
-          </button>
+          <button className="btn full" type="submit">{buttonText}</button>
+          {error && <p className="error">{error}</p>}
         </form>
-      </header>
-      {error && <p style={{ color: "#c0392b", textAlign: "center", padding: "8px" }}>{error}</p>}
-      <p style={{ textAlign: "center", padding: "16px" }}>
-        <a href={switchHref}>{switchText}</a>
-      </p>
-    </section>
+        <p className="switch">{switchText} <a href={switchHref}>{switchLink}</a></p>
+      </section>
+    </Layout>
   );
 }
 

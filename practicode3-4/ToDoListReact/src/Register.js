@@ -6,10 +6,13 @@ import service from './service.js';
 function Register() {
   return (
     <AuthForm
-      title="register"
-      buttonText="הרשמה"
+      title="הצטרפי"
+      highlight="לצוות."
+      subtitle="פותחים משתמש תוך שנייה ומתחילים לסגור משימות."
+      buttonText="יצירת משתמש ←"
       onSubmit={service.register}
-      switchText="כבר יש לך משתמש? להתחברות"
+      switchText="כבר יש לך משתמש?"
+      switchLink="להתחברות"
       switchHref="/login"
     />
   );

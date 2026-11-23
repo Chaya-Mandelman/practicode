@@ -6,10 +6,13 @@ import service from './service.js';
 function Login() {
   return (
     <AuthForm
-      title="login"
-      buttonText="התחברות"
+      title="ברוכה"
+      highlight="השבה."
+      subtitle="המשימות שלך מחכות לך. בואי נמשיך מאיפה שעצרת."
+      buttonText="התחברות ←"
       onSubmit={service.login}
-      switchText="אין לך משתמש? להרשמה"
+      switchText="עוד אין לך משתמש?"
+      switchLink="להרשמה"
       switchHref="/register"
     />
   );
