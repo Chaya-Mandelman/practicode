@@ -36,6 +36,13 @@ public partial class ToDoDbContext : DbContext
             entity.ToTable("items");
 
             entity.Property(e => e.Name).HasMaxLength(100);
+
+            entity.HasIndex(e => e.UserId);
+
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<User>(entity =>

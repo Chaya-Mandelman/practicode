@@ -24,7 +24,10 @@ builder.Services.AddDbContext<ToDoDbContext>(options =>
         ServerVersion.Parse("8.4.9-mysql")));
 
 // הגדרות JWT מתוך appsettings.json
-var jwtKey = builder.Configuration["Jwt:Key"]!;
+// הסודות האמיתיים נמצאים ב-appsettings.Development.json (לא נשמר ב-git)
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
+    throw new InvalidOperationException("Jwt:Key must be set (at least 32 chars) in appsettings.Development.json or environment variables");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
@@ -109,34 +112,49 @@ app.MapPost("/login", async (ToDoDbContext db, IPasswordHasher<User> hasher, Log
 // כל ה-routes של המשימות דורשים טוקן תקין
 var items = app.MapGroup("/items").RequireAuthorization();
 
-// שליפת כל המשימות
-items.MapGet("/", async (ToDoDbContext db) =>
-    await db.Items.ToListAsync());
+// מזהה המשתמש המחובר מתוך הטוקן
+int GetUserId(ClaimsPrincipal user) =>
+    int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-// הוספת משימה חדשה
-items.MapPost("/", async (ToDoDbContext db, Item item) =>
+// שליפת המשימות של המשתמש המחובר
+items.MapGet("/", async (ToDoDbContext db, ClaimsPrincipal user) =>
 {
+    var userId = GetUserId(user);
+    return await db.Items.Where(i => i.UserId == userId).ToListAsync();
+});
+
+// הוספת משימה חדשה למשתמש המחובר
+items.MapPost("/", async (ToDoDbContext db, ClaimsPrincipal user, Item input) =>
+{
+    var item = new Item
+    {
+        Name = input.Name,
+        IsComplete = input.IsComplete ?? false,
+        UserId = GetUserId(user)
+    };
     db.Items.Add(item);
     await db.SaveChangesAsync();
     return Results.Created($"/items/{item.Id}", item);
 });
 
-// עדכון משימה
-items.MapPut("/{id}", async (ToDoDbContext db, int id, Item input) =>
+// עדכון משימה - רק אם היא שייכת למשתמש
+items.MapPut("/{id}", async (ToDoDbContext db, ClaimsPrincipal user, int id, Item input) =>
 {
-    var item = await db.Items.FindAsync(id);
+    var userId = GetUserId(user);
+    var item = await db.Items.FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
     if (item is null) return Results.NotFound();
 
     if (input.Name is not null) item.Name = input.Name;
-    item.IsComplete = input.IsComplete;
+    if (input.IsComplete is not null) item.IsComplete = input.IsComplete;
     await db.SaveChangesAsync();
     return Results.Ok(item);
 });
 
-// מחיקת משימה
-items.MapDelete("/{id}", async (ToDoDbContext db, int id) =>
+// מחיקת משימה - רק אם היא שייכת למשתמש
+items.MapDelete("/{id}", async (ToDoDbContext db, ClaimsPrincipal user, int id) =>
 {
-    var item = await db.Items.FindAsync(id);
+    var userId = GetUserId(user);
+    var item = await db.Items.FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
     if (item is null) return Results.NotFound();
 
     db.Items.Remove(item);
