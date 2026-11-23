@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // כתובת ה-API כברירת מחדל (Config Defaults)
-axios.defaults.baseURL = "http://localhost:5140";
+axios.defaults.baseURL = process.env.REACT_APP_API_URL || "https://practicode34-mhas.onrender.com";
 
 // מוסיף את הטוקן לכל בקשה שיוצאת
 axios.interceptors.request.use((config) => {
